@@ -2,7 +2,9 @@
 
 support us to make better tools :
 
-<a href="https://www.patreon.com/macbook47?fan_landing=true" data-patreon-widget-type="become-patron-button">Become a Patron!</a>
+Made with ❤ by [aphip uhuy](https://www.linkedin.com/in/faizudin-al-hamawi-a1939349/)
+
+[Buy me a coffee](https://www.buymeacoffee.com/macbook47)
 
 # kereto_jowo
 This tools used to book ticket smartly
