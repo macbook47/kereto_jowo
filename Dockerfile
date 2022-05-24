@@ -1,4 +1,4 @@
-FROM python:2.7.14
+FROM python:3.9.8
 
 RUN mkdir -p /app /data
 WORKDIR /app
