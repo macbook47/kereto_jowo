@@ -2,3 +2,5 @@ recipe.txt
 recipe2.txt
 .vscode/settings.json
 recipe.txt
+*.log
+recipe-*

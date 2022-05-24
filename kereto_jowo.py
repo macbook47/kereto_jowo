@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 
 (C) Copyright 2019 aphip_uhuy
@@ -20,21 +20,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 import os
-import schedule
-import time
-import datetime
-import pycurl
-import json
-import cStringIO
 import logging
-import requests
-
-from hashlib import md5
+import datetime
+import json
 from base64 import b64decode
 from base64 import b64encode
-
+import pycurl
+import requests
 from Crypto.Cipher import AES
-from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
 
 logging.basicConfig(filename='kereto_jowo-' + datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + '.log', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -42,7 +35,7 @@ logging.basicConfig(filename='kereto_jowo-' + datetime.datetime.now().strftime("
 
 def main():
     print('=======================================================')
-    print('              Nggolek Tiket V3.0.7')
+    print('              Nggolek Tiket V4.0.7')
     print('')
     print('This tools used to book ticket smartly')
     print('This program is secret software: you cant redistribute it and/or modify')
@@ -50,24 +43,31 @@ def main():
     print('the Secret Software Society, either version 3 of the License, or')
     print('any later version.')
     print('')
-    print('Usage: python kereto_jowo.py retry_num use_proxy(0 if no, 1 if yes) set_seat(0 if no, 1 if yes) recipe')
+    print('Usage: python3 kereto_jowo.py recipe')
     print('')
     print('=======================================================')
     print('')
 
     args = len(sys.argv)
-    if args < 5:
-        print('\nUsage: python ' + str(sys.argv[0]) + ' retry_num use_proxy(0 if no, 1 if yes) set_seat(0 if no, 1 if yes) recipe\n')
+    if args < 2:
+        print('\nUsage: python3 ' + str(sys.argv[0]) + ' recipe\n')
         sys.exit()
 
-    numretry = sys.argv[1]
-    isusingproxy = sys.argv[2]
-    issetseat = sys.argv[3]
-    filepath = sys.argv[4]
+    filepath = sys.argv[1]
 
     if not os.path.isfile(filepath):
         print("File path {} does not exist. Exiting...".format(filepath))
         sys.exit()
+
+    linedata = []
+    with open(filepath) as my_file:
+        linedata = my_file.readlines()
+
+    paramcheck = json.loads(linedata[0].strip())
+
+    numretry = str(paramcheck['numretry'])
+    isusingproxy = str(paramcheck['isusingproxy'])
+    issetseat = str(paramcheck['issetseat'])
 
     if numretry == "":
         print("Num of retry cannot be blank. Exiting...")
@@ -81,10 +81,6 @@ def main():
         print("set seat cannot be blank. Exiting...")
         sys.exit()
 
-    linedata = []
-    with open(filepath) as my_file:
-        linedata = my_file.readlines()
-
     if issetseat == "1":
         if linedata.count < 4:
             print("please define json seat data on recipe. Exiting...")
@@ -93,9 +89,9 @@ def main():
     if issetseat == "0":
         linedata[3] = "{}"
 
-    check_first(linedata[2].strip(), linedata[1].strip(), numretry, isusingproxy)
+    check_first_new(linedata[2].strip(), linedata[1].strip(), numretry, isusingproxy)
 
-    if(check_first):
+    if (check_first_new):
         kai_booktiket(linedata[0].strip(), linedata[1].strip(), checkresult, numretry, isusingproxy, issetseat, linedata[3].strip())
 
 
@@ -104,15 +100,15 @@ class AESCipher:
         self.key = key
 
     def encrypt(self, data):
-        iv = 'kudalumpingtelek'
+        iv = b'kudalumpingtelek'
         self.cipher = AES.new(self.key, AES.MODE_CBC, iv)
-        return b64encode(self.cipher.encrypt(pad(data.encode('utf-8'), AES.block_size)))
+        return b64encode(self.cipher.encrypt(pad(data.encode('utf-8'), AES.block_size))).decode("utf8")
 
     def decrypt(self, data):
         raw = b64decode(data)
-        iv = 'kudalumpingtelek'
+        iv = b'kudalumpingtelek'
         self.cipher = AES.new(self.key, AES.MODE_CBC, iv)
-        return unpad(self.cipher.decrypt(raw), AES.block_size)
+        return unpad(self.cipher.decrypt(raw), AES.block_size).decode("utf8")
 
     def encrypt_object(self, python_obj):
         new_obj = {}
@@ -147,13 +143,13 @@ class AESCipher:
             return value3
 
 
-def check_first(checkdata, bookingdata, numretry, usingproxy):
+def check_first_new(checkdata, bookingdata, numretry, usingproxy):
     successCheck = False
     usingproxy = bool(int(usingproxy) > 0)
     retrylogin = 0
     maxretrylogin = int(numretry)
     resCheck = ""
-    pwd = 'telo_pendem_tele'
+    pwd = b'telo_pendem_tele'
 
     while retrylogin < maxretrylogin and not successCheck:
         try:
@@ -163,17 +159,17 @@ def check_first(checkdata, bookingdata, numretry, usingproxy):
             print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ' process -> search seat to kai :')
             print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ' process -> try sending raw data search seat to kai :')
 
-            target = 'http://midsvc-rtsng.kai.id:8111/rtsngmid/mobile/getscheduleune'
+            target = 'https://midsvc-rts40.kai.id/rtsngmid/mobile/getschedulecity2city'
             headers = {
                 'Content-Type': 'application/json;charset=utf-8',
                 'Accept': 'application/json, text/plain, */*',
-                'Host': 'midsvc-rtsng.kai.id:8111',
+                'Host': 'midsvc-rts40.kai.id',
                 'source': 'mobile',
                 'User-Agent': 'KAI/2.6.0'}
 
-            bookdataEncrypt = '{"staorigincode":"' + AESCipher(pwd).encrypt(reqcheck['org']) + '","stadestinationcode":"' + AESCipher(pwd).encrypt(reqcheck['des']) + '","tripdate":"' + AESCipher(pwd).encrypt(reqcheck['date']) + '"}'
-
-            r = requests.post(target, data=bookdataEncrypt, headers=headers)
+            bookdataEncrypt = '{"staorigincode":"' + AESCipher(pwd).encrypt(reqcheck['org']) + '","stadestinationcode":null,"departuredate":"' + AESCipher(pwd).encrypt(reqcheck['date']) + '","passenger":"' + AESCipher(pwd).encrypt(reqcheck['adult']) + '","infant":"' + AESCipher(pwd).encrypt(reqcheck['child']) + '","seatclass":"' + AESCipher(pwd).encrypt(reqcheck['seatclass']) + '","roundTripIntercity":"0eM4cVgalmQlxb9shTnWjw==","returndate":"' + AESCipher(pwd).encrypt(reqcheck['date_return']) + '","orgname":"' + AESCipher(pwd).encrypt(reqcheck['orgname']) + '","destname":"' + AESCipher(pwd).encrypt(reqcheck['destname']) + '","searchLocal":"0eM4cVgalmQlxb9shTnWjw==","paramorigin":"' + AESCipher(pwd).encrypt(reqcheck['org']) + '","paramdestination":"' + AESCipher(pwd).encrypt(reqcheck['destname']) + '","tripdate":"' + AESCipher(pwd).encrypt(reqcheck['date']) + '"}'
+            logging.info('log search data : ' + bookdataEncrypt)
+            r = requests.post(target, data=bookdataEncrypt, headers=headers, timeout=10)
 
             if r.status_code != 200:
                 print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ' process -> opps found error :')
@@ -183,7 +179,7 @@ def check_first(checkdata, bookingdata, numretry, usingproxy):
 
             print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ' process -> check res : ' + str(r.status_code))
             resCheck = json.loads(r.text)
-            logging.info('check set res : ' + str(resCheck))
+            logging.info('check set res : ' + str(resCheck['code']))
 
             if resCheck['code'] == '00':
                 print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ' process -> check availability seat')
@@ -219,7 +215,7 @@ def check_first(checkdata, bookingdata, numretry, usingproxy):
     return successCheck
 
 
-def retry_login(logindata, numretry, usingproxy):
+def retry_login_new(logindata, numretry, usingproxy):
     successlogin = False
     usingproxy = bool(int(usingproxy) > 0)
     retrylogin = 0
@@ -234,38 +230,28 @@ def retry_login(logindata, numretry, usingproxy):
             print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ' process -> try sending raw data login to kai :')
             # print(logindata)
             # print('#########################################')
-            buf = cStringIO.StringIO()
-            e = pycurl.Curl()
-            e.setopt(
-                e.URL, 'http://midsvc-rtsng.kai.id:8111/rtsngmid/cred/signin')
-            e.setopt(e.HTTPHEADER, [
-                'Content-Type: 	application/json;charset=utf-8', 'Host: midsvc-rtsng.kai.id:8111', 'Accept: application/json',
-                'source: mobile', 'User-Agent: okhttp/3.12.1'])
-            e.setopt(e.POST, 1)
-            e.setopt(
-                e.POSTFIELDS, logindata)
-            e.setopt(e.WRITEFUNCTION, buf.write)
-            e.setopt(e.VERBOSE, False)
-            e.setopt(e.CONNECTTIMEOUT, 20)
-            e.setopt(e.SSL_VERIFYPEER, 0)
-            e.setopt(e.SSL_VERIFYHOST, 0)
-            if(usingproxy):
-                e.setopt(e.PROXY, 'proxy3.bri.co.id')
-                e.setopt(e.PROXYPORT, 1707)
-                e.setopt(e.PROXYTYPE, e.PROXYTYPE_HTTP)
-            e.perform()
+            target = 'https://midsvc-rts40.kai.id/rtsngmid/cred/signin'
+            headers = {
+                'Content-Type': 'application/json;charset=utf-8',
+                'Accept': 'application/json, text/plain, */*',
+                'Host': 'midsvc-rts40.kai.id',
+                'source': 'mobile',
+                'User-Agent': 'KAI/2.6.0'}
 
-            if e.getinfo(e.HTTP_CODE) != 200:
+            if(usingproxy):
+                proxies = {'https': 'http://localhost:3128'}
+
+            r = requests.post(target, data=logindata, headers=headers, timeout=10)
+
+            if r.status_code != 200:
                 print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ' process -> opps found error :')
-                print(buf.getvalue())
-                logging.warning('error login res : ' + str(buf.getvalue))
-                buf.close()
+                print(r.text)
+                logging.warning('error login res : ' + r.text)
                 raise Exception
 
-            print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ' process -> login res : ' + buf.getvalue())
-            reslogin = json.loads(buf.getvalue())
-            logging.info('login res : ' + str(reslogin))
-            buf.close()
+            print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ' process -> login res : ' + str(r.text))
+            reslogin = json.loads(r.text)
+            logging.info('login res : ' + str(reslogin))            
             successlogin = True
             print('#########################################')
             print('')
@@ -281,13 +267,13 @@ def retry_login(logindata, numretry, usingproxy):
     return reslogin
 
 
-def booking_class(loginres, logindata, bookingdata, checkdata, numretry, usingproxy):
+def booking_class_new(loginres, logindata, bookingdata, checkdata, numretry, usingproxy):
     successbook = False
     usingproxy = bool(int(usingproxy) > 0)
     retrybook = 0
     maxretrybook = int(numretry)
     resbooking = ""
-    pwd = 'telo_pendem_tele'
+    pwd = b'telo_pendem_tele'
 
     while retrybook < maxretrybook and not successbook:
         try:
@@ -299,68 +285,64 @@ def booking_class(loginres, logindata, bookingdata, checkdata, numretry, usingpr
             reqbook = json.loads(bookingdata)
             checkdataraw = checkdata
             # prepare data booking
-            bookdataraw = ('{"propscheduleid":"' + checkdataraw["propscheduleid"] + '",'
-                           '"tripid":"' + checkdataraw['tripid'] + '",'
-                           '"orgid":"' + str(checkdataraw['orgid']) + '",'
-                           '"desid":"' + str(checkdataraw['desid']) + '",'
-                           '"orgcode":"' + checkdataraw['orgcode'] + '",'
-                           '"destcode":"' + checkdataraw['destcode'] + '",'
-                           '"tripdate":"' + checkdataraw['tripdate'] + '",'
-                           '"departdate":"' + checkdataraw['tripdate'] + '",'
-                           '"noka":"' + checkdataraw['noka'] + '",'
-                           '"extrafee":"0",'
-                           '"wagonclasscode":"' + checkdataraw['wagonclasscode'] + '",'
-                           '"wagonclassid":"' + str(checkdataraw['wagonclassid']) + '",'
-                           '"customername":"' + reqbook['name'] + '",'
-                           '"phone":"' + reqbook['phone'] + '",'
-                           '"email":"' + reqbook['email'] + '",'
-                           '"subclass":"' + checkdataraw['subclass'] + '",'
-                           '"totpsgadult":"' + reqbook['num_pax_adult'] + '",'
-                           '"totpsgchild":"0",'
-                           '"totpsginfant":"' + reqbook['num_pax_infant'] + '",'
-                           '"paxes":""'
+            passengerdataencrypt = ""
+            
+            for i in reqbook['passenger']:
+                i['idnum'] = AESCipher(pwd).encrypt(i['idnum'])
+                i['name'] = AESCipher(pwd).encrypt(i['name'])
+                i['psgtype'] = AESCipher(pwd).encrypt(i['psgtype'])
+                passengerdataencrypt = i
+
+            bookdataraw = ('{"propscheduleid":"' + AESCipher(pwd).encrypt(checkdataraw["propscheduleid"]) + '",'
+                           '"tripid":"' + AESCipher(pwd).encrypt(checkdataraw['tripid']) + '",'
+                           '"orgid":"' + AESCipher(pwd).encrypt(str(checkdataraw['orgid'])) + '",'
+                           '"desid":"' + AESCipher(pwd).encrypt(str(checkdataraw['desid'])) + '",'
+                           '"orgcode":"' + AESCipher(pwd).encrypt(checkdataraw['orgcode'] )+ '",'
+                           '"destcode":"' + AESCipher(pwd).encrypt(checkdataraw['destcode']) + '",'
+                           '"tripdate":"' + AESCipher(pwd).encrypt(checkdataraw['tripdate']) + '",'
+                           '"departdate":"' + AESCipher(pwd).encrypt(checkdataraw['tripdate']) + '",'
+                           '"noka":"' + AESCipher(pwd).encrypt(checkdataraw['noka']) + '",'
+                           '"extrafee":"rjs6uhCMGfOFx7+/9bzOFw==",'
+                           '"wagonclasscode":"' + AESCipher(pwd).encrypt(checkdataraw['wagonclasscode']) + '",'
+                           '"wagonclassid":"' + AESCipher(pwd).encrypt(str(checkdataraw['wagonclassid'])) + '",'
+                           '"customername":"' + AESCipher(pwd).encrypt(reqbook['name']) + '",'
+                           '"phone":"' + AESCipher(pwd).encrypt(reqbook['phone']) + '",'
+                           '"email":"' + AESCipher(pwd).encrypt(reqbook['email']) + '",'
+                           '"subclass":"' + AESCipher(pwd).encrypt(checkdataraw['subclass']) + '",'
+                           '"totpsgadult":"' + AESCipher(pwd).encrypt(reqbook['num_pax_adult']) + '",'
+                           '"totpsgchild":"rjs6uhCMGfOFx7+/9bzOFw==",'
+                           '"totpsginfant":"' + AESCipher(pwd).encrypt(reqbook['num_pax_infant']) + '",'
+                           '"paxes":['+ json.dumps(passengerdataencrypt) +']'
                            '}')
 
-            bookdatajson = json.loads(bookdataraw)
-            bookdatajson['paxes'] = reqbook['passenger']
+            logging.info('check bookdataraw : ' + bookdataraw)
 
-            bookdataEncrypt = json.dumps(AESCipher(pwd).encrypt_object(bookdatajson))
-            # print(bookdataEncrypt)
+            target = 'https://midsvc-rts40.kai.id/rtsngmid/mobile/booking'
+            headers = {
+                'Content-Type': 'application/json;charset=utf-8',
+                'Accept': 'application/json, text/plain, */*',
+                'authorization': 'Bearer ' + tokenhead + '',
+                'Host': 'midsvc-rts40.kai.id',
+                'Accept-Encoding': 'gzip, deflate',
+                'source': 'mobile',
+                'User-Agent': 'okhttp/3.12.1'}
 
-            buf2 = cStringIO.StringIO()
-            e2 = pycurl.Curl()
-            e2.setopt(
-                e2.URL, 'http://midsvc-rtsng.kai.id:8111/rtsngmid/mobile/booking')
-            e2.setopt(e2.HTTPHEADER, [
-                'Content-Type: 	application/json;charset=utf-8', 'accept: application/json, text/plain, */*',
-                'authorization: Bearer ' + tokenhead + '', 'Host: midsvc-rtsng.kai.id:8111', 'Accept-Encoding: gzip, deflate',
-                'source: mobile', 'User-Agent: okhttp/3.12.1'])
-            e2.setopt(e2.POST, 1)
-            e2.setopt(
-                e2.POSTFIELDS, bookdataEncrypt)
-            e2.setopt(e2.WRITEFUNCTION, buf2.write)
-            e2.setopt(e2.VERBOSE, False)
-            e2.setopt(e2.CONNECTTIMEOUT, 60)
-            e2.setopt(e2.SSL_VERIFYPEER, 0)
-            e2.setopt(e2.SSL_VERIFYHOST, 0)
             if(usingproxy):
-                e2.setopt(e2.PROXY, 'proxy3.bri.co.id')
-                e2.setopt(e2.PROXYPORT, 1707)
-                e2.setopt(e2.PROXYTYPE, e2.PROXYTYPE_HTTP)
-            e2.perform()
+                proxies = {'https': 'http://localhost:3128'}
 
-            if e2.getinfo(e2.HTTP_CODE) != 200:
+            r = requests.post(target, data=bookdataraw, headers=headers, timeout=10)
+
+            if r.status_code != 200:
                 print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ' process -> opps found error :')
-                print(buf2.getvalue())
-                logging.warning('error booking res : ' + str(buf2.getvalue()))
-                if str(buf2.getvalue()) == '{"error":"token_invalid"}' or (str(buf2.getvalue()) == '{"error":"token_expired"}'):
-                    loginres = retry_login(logindata, numretry, usingproxy)
+                print(r.text)
+                logging.warning('error booking res : ' + r.text)
+                if r.text == '{"error":"token_invalid"}' or (r.text == '{"error":"token_expired"}'):
+                    loginres = retry_login_new(logindata, numretry, usingproxy)
                 raise Exception
 
-            resbooking = json.loads(buf2.getvalue())
+            resbooking = json.loads(r.text)
             print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ' process -> booking res : ' + resbooking['code'] + '-' + resbooking['message'])
-            logging.info('booking res : ' + str(resbooking))
-            buf2.close()
+            logging.info('booking res : ' + str(resbooking))            
             successbook = True
             print('#########################################')
             print('')
@@ -382,7 +364,7 @@ def payment1_class(loginres, logindata, unitcodepay, paycode, netamount, numretr
     retrypay = 0
     maxretrypay = int(numretry)
     respay = ""
-    pwd = 'telo_pendem_tele'
+    pwd = b'telo_pendem_tele'
 
     while retrypay < maxretrypay and not successpay:
         try:
@@ -399,41 +381,33 @@ def payment1_class(loginres, logindata, unitcodepay, paycode, netamount, numretr
             print('order code : ' + paycode)
             print('net ammount : ' + str(netamount))
 
-            buf3 = cStringIO.StringIO()
-            e3 = pycurl.Curl()
-            e3.setopt(
-                e3.URL, 'http://midsvc-rtsng.kai.id:8111/rtsngmid/py_service/mobile/checkout')
-            e3.setopt(e3.HTTPHEADER, [
-                'Content-Type: 	application/json;charset=utf-8', 'accept: application/json, text/plain, */*',
-                'authorization: Bearer ' + tokenhead + '', 'Host: midsvc-rtsng.kai.id:8111', 'Accept-Encoding: gzip, deflate',
-                'source: mobile', 'User-Agent: okhttp/3.12.1'])
-            e3.setopt(e3.POST, 1)
-            e3.setopt(
-                e3.POSTFIELDS, datasend)
-            e3.setopt(e3.WRITEFUNCTION, buf3.write)
-            e3.setopt(e3.VERBOSE, False)
-            e3.setopt(e3.SSL_VERIFYPEER, 0)
-            e3.setopt(e3.SSL_VERIFYHOST, 0)
+            target = 'https://midsvc-rts40.kai.id/rtsngmid/py_service/mobile/checkout'
+            headers = {
+                'Content-Type': 'application/json;charset=utf-8',
+                'Accept': 'application/json, text/plain, */*',
+                'authorization': 'Bearer ' + tokenhead + '',
+                'Host': 'midsvc-rts40.kai.id',
+                'Accept-Encoding': 'gzip, deflate',
+                'source': 'mobile',
+                'User-Agent': 'okhttp/3.12.1'}
 
             if(usingproxy):
-                e3.setopt(e3.PROXY, 'proxy3.bri.co.id')
-                e3.setopt(e3.PROXYPORT, 1707)
-                e3.setopt(e3.PROXYTYPE, e3.PROXYTYPE_HTTP)
+                proxies = {'https': 'http://localhost:3128'}
 
-            e3.perform()
+            logging.info('check paymentdata : ' + datasend)
+            r = requests.post(target, data=datasend, headers=headers, timeout=10)
 
-            if e3.getinfo(e3.HTTP_CODE) != 200:
+            if r.status_code != 200:
                 print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ' process -> opps found error :')
-                print(buf3.getvalue())
-                logging.info('error pay res : ' + str(buf3.getvalue()))
-                if str(buf3.getvalue()) == '{"error":"token_invalid"}' or (str(buf3.getvalue()) == '{"error":"token_expired"}'):
-                    loginres = retry_login(logindata, numretry, usingproxy)
+                print(r.text)
+                logging.warning('error pay res : ' + r.text)
+                if r.text == '{"error":"token_invalid"}' or (r.text == '{"error":"token_expired"}'):
+                    loginres = retry_login_new(logindata, numretry, usingproxy)
                 raise Exception
 
-            print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ' process -> booking phase 2 res : ' + buf3.getvalue())
-            respay = json.loads(buf3.getvalue())
-            logging.info('pay res : ' + str(respay))
-            buf3.close()
+            print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ' process -> booking phase 2 res : ' + r.text)
+            respay = json.loads(r.text)
+            logging.info('pay res : ' + str(respay))            
             successpay = True
             print('#########################################')
             print('')
@@ -466,38 +440,32 @@ def flag_class(loginres, logindata, commonPaycode, numretry, usingproxy):
 
             tokenhead = loginres['payload']
 
-            buf4 = cStringIO.StringIO()
-            e4 = pycurl.Curl()
-            e4.setopt(
-                e4.URL, 'http://midsvc-rtsng.kai.id:8111/rtsngmid/mobile/info/updatepaytype/' + commonPaycode + '/227')
-            e4.setopt(e4.HTTPHEADER, [
-                'Content-Type: 	application/json;charset=utf-8', 'accept: application/json, text/plain, */*',
-                'authorization: Bearer ' + tokenhead + '', 'Host: midsvc-rtsng.kai.id:8111', 'Accept-Encoding: gzip, deflate',
-                'source: mobile', 'User-Agent: okhttp/3.12.1'])
-            e4.setopt(e4.WRITEFUNCTION, buf4.write)
-            e4.setopt(e4.VERBOSE, False)
-            e4.setopt(e4.SSL_VERIFYPEER, 0)
-            e4.setopt(e4.SSL_VERIFYHOST, 0)
+            target = 'https://midsvc-rts40.kai.id/rtsngmid/mobile/info/updatepaytype/' + commonPaycode + '/227'
+            headers = {
+                'Content-Type': 'application/json;charset=utf-8',
+                'Accept': 'application/json, text/plain, */*',
+                'authorization': 'Bearer ' + tokenhead + '',
+                'Host': 'midsvc-rts40.kai.id',
+                'Accept-Encoding': 'gzip, deflate',
+                'source': 'mobile',
+                'User-Agent': 'okhttp/3.12.1'}
 
             if(usingproxy):
-                e4.setopt(e4.PROXY, 'proxy3.bri.co.id')
-                e4.setopt(e4.PROXYPORT, 1707)
-                e4.setopt(e4.PROXYTYPE, e4.PROXYTYPE_HTTP)
+                proxies = {'https': 'http://localhost:3128'}
 
-            e4.perform()
+            r = requests.get(target, headers=headers, timeout=10)
 
-            if e4.getinfo(e4.HTTP_CODE) != 200:
+            if r.status_code != 200:
                 print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ' process -> opps found error :')
-                print(buf4.getvalue())
-                logging.info('flag res : ' + str(buf4.getvalue()))
-                if str(buf4.getvalue()) == '{"error":"token_invalid"}' or (str(buf4.getvalue()) == '{"error":"token_expired"}'):
-                    loginres = retry_login(logindata, numretry, usingproxy)
+                print(r.text)
+                logging.warning('error flag res : ' + r.text)
+                if r.text == '{"error":"token_invalid"}' or (r.text == '{"error":"token_expired"}'):
+                    loginres = retry_login_new(logindata, numretry, usingproxy)
                 raise Exception
 
-            print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ' process -> booking flag res : ' + buf4.getvalue())
-            resflag = buf4.getvalue()
-            logging.info('flag res : ' + str(resflag))
-            buf4.close()
+            print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ' process -> booking flag res : ' + r.text)
+            resflag = r.text
+            logging.info('flag res : ' + r.text)
             successflag = True
 
             print('#########################################')
@@ -592,10 +560,10 @@ def kai_booktiket(logindata, bookingdata, checkdata, numretry, usingproxy, setse
 
     while retry < maxretry and not success:
         try:
-            reslogin = retry_login(logindata, numretry, usingproxy)
+            reslogin = retry_login_new(logindata, numretry, usingproxy)
 
             if reslogin['code'] == "00":
-                resbooking = booking_class(reslogin, logindata, bookingdata, checkdata, numretry, usingproxy)
+                resbooking = booking_class_new(reslogin, logindata, bookingdata, checkdata, numretry, usingproxy)
 
                 if resbooking['code'] == "00":
                     unitcodepay = resbooking['payload']['unitcode']
