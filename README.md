@@ -5,7 +5,7 @@ It under the terms of the Himacrot License as published by the Secret Software S
 either version 3 of the License, or any later version.
 
 
-    Usage: python kereto_jowo.py retry_num use_proxy(0 if no, 1 if yes) set_seat(0 if no, 1 if yes) recipe
+    Usage: python kereto_jowo.py recipe
 
 
 ## with docker
@@ -13,15 +13,15 @@ either version 3 of the License, or any later version.
 1. clone this repo
 2. cd kai_backd
 3. build docker
-    ```
+    ```bash
     docker build -t kereto_jowo .
     ```
     
 4. access folder with json data
 5. run script with docker
-    ```
-    unix    -> docker run --rm -v "$PWD":/data kereto_jowo 1 0 0 /data/recipe.txt
-    windows -> docker run --rm -v %cd%:/data kereto_jowo 1 0 0 /data/recipe.txt
+    ```bash
+    unix    -> docker run --rm -v "$PWD":/data kereto_jowo /data/recipe.txt
+    windows -> docker run --rm -v %cd%:/data kereto_jowo /data/recipe.txt
     ```
 
 6. profit
@@ -30,51 +30,61 @@ either version 3 of the License, or any later version.
 
 1. open link https://www.katacoda.com/courses/docker/playground
 2. create folder projects
-    ```
+    ```bash
     mkdir projects
     ```
 3. cd to folder projects
-    ```
+    ```bash
     cd projects
     ```
 4. git setting to folder projects
-    ```
+    ```bash
     git init
     ```
 5. pull this repo
-    ```
+    ```bash
     git pull https://github.com/macbook47/kereto_jowo/
     ```
 6. edit recipe.txt with your data -> kalau gak tau vi, googling dl aja :P
-    ```
+    ```bash
     vi recipe.txt
     ```
     kalau susah pake vi, bisa install dulu nano -> apt-get install nano
-    ```
+    ```bash
     apt-get install nano
     nano recipe.txt
     ```
 7. build docker
-    ```
+    ```bash
     docker build -t kereto_jowo .
     ```
 8. run docker
-    ```
-    docker run kereto_jowo 1 0 0 recipe.txt
+    ```bash
+    docker run kereto_jowo recipe.txt
     ```
 9. profit
 
 
 ## json recipe detail
 
-line 1 is user pass kai mobile -> 
-```
-{"email": -> email mobile kai, "password": -> password mobile kai, "platform" :"mobile" -> jangan diganti}
+line 1 is parameter, user and password kai mobile -> 
+```json
+{
+"numretry":"10", -> jumlah rerty
+"isusingproxy":"0", -> penggunaan proxy (0 untuk tanpa proxy, 1 untuk menggunakan prox), proxy di set ke localhost:3028
+"issetseat":"0", -> jika ingin book no kursi (masih belum bisa ini, di set 0 aja ya)
+"email":"aphip_uhuy@ganteng.com", -> user kai mobile
+"password":"uhuy123", -> password kai mobile
+"imei":"CE92ADD6-86DD-4B96-8EA8-2BC0FF51C72A", -> pake ini aja isinya
+"version":"27.2", -> pake ini aja isinya
+"buildnumber":"60", -> pake ini aja isinya
+"devicetoken":"8BE0D0E2514B83F03CE16C02C8EFF4CAAD3CCA2FD25FCA3339C2ECF7277F0660", -> pake ini aja isinya
+"platform":"iphone" -> pake ini aja isinya}
 ```
 
 
 line 2 is passenger data ->
-```
+```json
 {
   "address": "Gedung IT BRI Jakarta", -> alamat mu ndes, ojo di isi akhirat yo
   
@@ -124,7 +134,7 @@ line 2 is passenger data ->
 
 line 3 is search seat data ->
 
-```
+```json
 {"adult": "3","child": 0,"date": "2019-03-21","date_return": "20190321","des": "BD","des_is_city": false,"infant": 0,"isreturn": false,"org": "GMR","org_is_city": false}
 ```
 
@@ -132,7 +142,7 @@ line 3 is search seat data ->
 
 line 4 is seat data -> jumlah aray json sesuai dg penumpang dewasa -> masih ada bug -> coba2 sendiri aja yes :P
 
-```
+```json
 {"seat": "9A","wagon_code": "EKS","wagon_no": "3"},{"seat": "9B","wagon_code": "EKS","wagon_no": "3"}
 ```
 
