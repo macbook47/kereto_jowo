@@ -94,7 +94,7 @@ line 2 is passenger data ->
 {
   "address": "Gedung IT BRI Jakarta", -> alamat mu ndes, ojo di isi akhirat yo
   
-  "date_return": "20180318", -> your date return -> isi aja kayak dep date
+  "date_return": "2018-03-18", -> your date return -> isi aja kayak dep date
   
   "dep_date": "2018-03-18", -> your depature date -> tgl keberangkatan yyyy-mm-dd
   
@@ -138,10 +138,26 @@ line 2 is passenger data ->
 }
 ```
 
-line 3 is search seat data ->
+line 3 is additional booking data ->
 
 ```json
-{"adult": "3","child": 0,"date": "2019-03-21","date_return": "20190321","des": "BD","des_is_city": false,"infant": 0,"isreturn": false,"org": "GMR","org_is_city": false}
+{"adult": "3", -> jumlah penumpang dewasa
+"child": 0, -> jumlah penumpang anak
+"date": "2019-03-21", -> your depature date -> tgl keberangkatan yyyy-mm-dd
+"date_return": "2019-03-21", -> your date return -> isi aja kayak dep date
+"des": "BD", -> stasiun tujuan -> untuk kode cek aja di web kai
+"des_is_city": false, -> gak usah diganti
+"infant": 0, -> jumlah penumpang bayi
+"isreturn": false, -> gak usah diganti
+"org": "GMR", -> stasiun keberangkatan -> untuk kode cek aja di web kai
+"org_is_city": false,
+"subclass": "X", -> kelas keretanya -> kode bisa di liat di web kai
+"subclass_return": "", -> kelas kereta klo pesen bolak balik
+"train_no": "16", -> kode kereta nya -> kode bisa di liat di web kai
+"orgname": "GAMBIR ", -> nama stasiun keberangkatan -> untuk nama cek aja di web kai
+"destname": "KOTA YOGYAKARTA ", -> nama stasiun tujuan -> untuk nama cek aja di web kai
+"seatclass":"all" -> gak usah diganti
+}
 ```
 
 
