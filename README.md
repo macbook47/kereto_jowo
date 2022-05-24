@@ -102,11 +102,11 @@ line 2 is passenger data ->
   
   "des": "CN", -> stasiun tujuan -> untuk kode cek aja di web kai
   
-  "email": "macbook.47@gmail.com", -> email nanti yg nerima notif
+  "email": "aphip_uhuy@ganteng.com", -> email nanti yg nerima notif
   
   "isreturn": false, -> kalo mau bolak balik
   
-  "name": "Jehan Rachmatika", -> nama yg pesen
+  "name": "Lord Voldermort", -> nama yg pesen
   
   "num_pax_adult": "2", -> jumlah penumpang dewasa -> menentukan jumlah array di penumpang dewasa
   
